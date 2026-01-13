@@ -1,0 +1,305 @@
+{
+  "info": {
+    "_postman_id": "microservices-minimal-test",
+    "name": "MICROSERVICES - Minimal Test Collection",
+    "description": "Minimal test suite with only essential Gateway endpoints\n\n**MINIMAL PAYMENT FLOW:**\n1. Login (1.3)\n2. Get Profile (2.3)\n3. Search Tuitions (3.3)\n4. Issue OTP (5.2)\n5. Confirm Payment (0.6)\n6. Get History (0.7)\n\n**ALL REQUESTS VIA API GATEWAY (Port 8080)**\n- JWT stored in HttpOnly cookie\n- Gateway injects X-Customer-ID from JWT\n- No manual headers needed",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "gateway_url",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "student_id",
+      "value": "S001",
+      "type": "string"
+    },
+    {
+      "key": "semester",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "tuition_amount",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "otp_code",
+      "value": "123456",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. AUTH SERVICE",
+      "item": [
+        {
+          "name": "1.3 Login - user123 (10M)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has access_token\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('access_token');",
+                  "    pm.environment.set('access_token', jsonData.access_token);",
+                  "});",
+                  "",
+                  "pm.test(\"Cookie is set\", function () {",
+                  "    pm.expect(pm.cookies.has('access_token')).to.be.true;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"user123\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{gateway_url}}/api/auth/login",
+              "host": ["{{gateway_url}}"],
+              "path": ["api", "auth", "login"]
+            },
+            "description": "Login with user123 (balance: 10M VND) via Gateway\n\nCredentials:\n- username: user123\n- password: password123\n\nReturns JWT in HttpOnly cookie"
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. CUSTOMER SERVICE",
+      "item": [
+        {
+          "name": "2.3 Get /me (Current Customer)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has customer data\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('id');",
+                  "    pm.expect(jsonData).to.have.property('username');",
+                  "    pm.expect(jsonData).to.have.property('balance');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{gateway_url}}/api/customers/me",
+              "host": ["{{gateway_url}}"],
+              "path": ["api", "customers", "me"]
+            },
+            "description": "Get current customer profile via Gateway\n\nAPI Gateway auto-injects X-Customer-ID from JWT"
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. TUITION SERVICE",
+      "item": [
+        {
+          "name": "3.3 Search Student 52000123 (3 unpaid)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has tuitions array\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('tuitions');",
+                  "    pm.expect(jsonData.tuitions).to.be.an('array');",
+                  "});",
+                  "",
+                  "pm.test(\"Save payable tuition details\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    var payableTuition = jsonData.tuitions.find(t => t.canPay === true);",
+                  "    if (payableTuition) {",
+                  "        pm.environment.set('student_id', payableTuition.student_id);",
+                  "        pm.environment.set('semester', payableTuition.semester);",
+                  "        pm.environment.set('tuition_amount', payableTuition.fee);",
+                  "    }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"student_id\": \"52000123\"\n}"
+            },
+            "url": {
+              "raw": "{{gateway_url}}/api/tuitions/search",
+              "host": ["{{gateway_url}}"],
+              "path": ["api", "tuitions", "search"]
+            },
+            "description": "Search student 52000123 (Nguyen Van A) via Gateway\n\nExpected:\n- 3 unpaid tuitions (HK1 2024-2025, HK2 2024-2025, HK1 2025-2026)\n- 1 paid tuition (HK2 2023-2024)\n- Only HK1 2024-2025 has canPay = true"
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. OTP SERVICE",
+      "item": [
+        {
+          "name": "5.2 Issue OTP (with JWT)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has OTP code and transaction_id\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('otp_code');",
+                  "    pm.expect(jsonData).to.have.property('transaction_id');",
+                  "    pm.environment.set('otp_code', jsonData.otp_code);",
+                  "    pm.environment.set('transaction_id', jsonData.transaction_id);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"student_id\": \"{{student_id}}\"\n}"
+            },
+            "url": {
+              "raw": "{{gateway_url}}/api/otp/issue",
+              "host": ["{{gateway_url}}"],
+              "path": ["api", "otp", "issue"]
+            },
+            "description": "Issue OTP for payment via Gateway\n\nRequires JWT (Gateway injects X-Customer-ID)\n\nFlow:\n1. Get customer info from Customer Service\n2. Get payable tuition from Student Service\n3. Create transaction in Payment Service\n4. Generate 6-digit OTP code\n5. Send OTP email\n6. Return OTP code and transaction ID"
+          }
+        }
+      ]
+    },
+    {
+      "name": "0. API GATEWAY",
+      "item": [
+        {
+          "name": "0.6 Confirm Payment via Gateway",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Payment confirmed\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('message');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"otp_code\": \"{{otp_code}}\",\n  \"student_id\": \"{{student_id}}\"\n}"
+            },
+            "url": {
+              "raw": "{{gateway_url}}/api/transactions/confirm",
+              "host": ["{{gateway_url}}"],
+              "path": ["api", "transactions", "confirm"]
+            },
+            "description": "Confirm payment with OTP\n\n⚠️ MANUAL STEP:\n1. Check previous response for OTP code\n2. OTP is auto-saved to {{otp_code}} variable\n3. Send request\n\nSteps:\n1. Verify OTP\n2. Deduct balance\n3. Mark tuition as paid\n4. Update transaction status to 'completed'"
+          }
+        },
+        {
+          "name": "0.7 Get Transaction History via Gateway",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response is array\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.be.an('array');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{gateway_url}}/api/transactions/history",
+              "host": ["{{gateway_url}}"],
+              "path": ["api", "transactions", "history"]
+            },
+            "description": "Get transaction history for current customer\n\nReturns all transactions (completed, pending, failed)"
+          }
+        }
+      ]
+    }
+  ]
+}

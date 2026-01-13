@@ -1,0 +1,295 @@
+﻿version: "3.9"
+
+networks:
+  ibanking-net:
+    driver: bridge
+
+volumes:
+  customer_db_data:
+  tuition_db_data:
+  payment_db_data:
+  otp_db_data:
+
+services:
+  # =========================================
+  # LAYER 1: DATABASES (Start First)
+  # =========================================
+  
+  # Customer Database (MySQL)
+  customer-db:
+    image: mysql:8.0
+    container_name: customer-db
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: customer_db
+      MYSQL_USER: customer_user
+      MYSQL_PASSWORD: customer_pass
+    ports:
+      - "3307:3306"
+    volumes:
+      - customer_db_data:/var/lib/mysql
+      - ./customer-service/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-prootpassword"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - ibanking-net
+
+  # Tuition Database (MySQL)
+  tuition-db:
+    image: mysql:8.0
+    container_name: tuition-db
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: tuition_db
+      MYSQL_USER: tuition_user
+      MYSQL_PASSWORD: tuition_pass
+    ports:
+      - "3308:3306"
+    volumes:
+      - tuition_db_data:/var/lib/mysql
+      - ./tuition-service/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-prootpassword"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - ibanking-net
+
+  # Payment Database (MySQL)
+  payment-db:
+    image: mysql:8.0
+    container_name: payment-db
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: payment_db
+      MYSQL_USER: payment_user
+      MYSQL_PASSWORD: payment_pass
+    ports:
+      - "3309:3306"
+    volumes:
+      - payment_db_data:/var/lib/mysql
+      - ./payment-service/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-prootpassword"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - ibanking-net
+
+  # OTP Database (MySQL)
+  otp-db:
+    image: mysql:8.0
+    container_name: otp-db
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: otp_db
+      MYSQL_USER: otp_user
+      MYSQL_PASSWORD: otp_pass
+    ports:
+      - "3310:3306"
+    volumes:
+      - otp_db_data:/var/lib/mysql
+      - ./otp-service/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-prootpassword"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - ibanking-net
+
+  # =========================================
+  # LAYER 2: BACKEND SERVICES (Start After DBs)
+  # =========================================
+  
+  # Auth Service (Stateless - No Database)
+  auth-service:
+    build: ./auth-service
+    container_name: auth-service
+    environment:
+      JWT_SECRET_KEY: a8f5f167f44f4964e6c998dee827110c3e7b6e3c9c3f4f7e8a1b2c3d4e5f6a7b
+      JWT_ALGORITHM: HS256
+      ACCESS_TOKEN_EXPIRE_HOURS: 24
+      CUSTOMER_SERVICE_URL: http://customer-service:8006
+      INTERNAL_API_KEY: sk_live_51KxYz9H8mN2pQ3rS4tU5vW6xY7zA8bC9dE0fG1hI2jK3lM4nO5pQ6rS7tU8vW9x
+      SERVICE_PORT: 8001
+    ports:
+      - "8001:8001"
+    networks:
+      - ibanking-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    restart: unless-stopped
+
+  # Customer Service (With Database)
+  customer-service:
+    build: ./customer-service
+    container_name: customer-service
+    environment:
+      MYSQL_HOST: customer-db
+      MYSQL_PORT: 3306
+      MYSQL_USER: customer_user
+      MYSQL_PASSWORD: customer_pass
+      MYSQL_DATABASE: customer_db
+      INTERNAL_API_KEY: sk_live_51KxYz9H8mN2pQ3rS4tU5vW6xY7zA8bC9dE0fG1hI2jK3lM4nO5pQ6rS7tU8vW9x
+      SERVICE_PORT: 8006
+    ports:
+      - "8006:8006"
+    depends_on:
+      customer-db:
+        condition: service_healthy
+    networks:
+      - ibanking-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8006/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 40s
+    restart: on-failure:5
+
+  # Tuition Service (With Database)
+  tuition-service:
+    build: ./tuition-service
+    container_name: tuition-service
+    environment:
+      DATABASE_URL: mysql+pymysql://tuition_user:tuition_pass@tuition-db:3306/tuition_db
+      INTERNAL_API_KEY: sk_live_51KxYz9H8mN2pQ3rS4tU5vW6xY7zA8bC9dE0fG1hI2jK3lM4nO5pQ6rS7tU8vW9x
+      SERVICE_PORT: 8002
+    ports:
+      - "8002:8002"
+    depends_on:
+      tuition-db:
+        condition: service_healthy
+    networks:
+      - ibanking-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8002/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 40s
+    restart: on-failure:5
+
+  # Payment Service (With Database)
+  payment-service:
+    build: ./payment-service
+    container_name: payment-service
+    environment:
+      DATABASE_URL: mysql+pymysql://payment_user:payment_pass@payment-db:3306/payment_db
+      INTERNAL_API_KEY: sk_live_51KxYz9H8mN2pQ3rS4tU5vW6xY7zA8bC9dE0fG1hI2jK3lM4nO5pQ6rS7tU8vW9x
+      CUSTOMER_SERVICE_URL: http://customer-service:8006
+      STUDENT_SERVICE_URL: http://tuition-service:8002
+      OTP_SERVICE_URL: http://otp-service:8004
+      SERVICE_PORT: 8003
+      SMTP_HOST: smtp.gmail.com
+      SMTP_PORT: 587
+      SMTP_USER: soagk1tdtu@gmail.com
+      SMTP_PASSWORD: wveg zevy kdya rxbv
+      SMTP_FROM_EMAIL: soagk1tdtu@gmail.com
+      SMTP_FROM_NAME: iBanking TDTU
+    ports:
+      - "8003:8003"
+    depends_on:
+      payment-db:
+        condition: service_healthy
+      customer-service:
+        condition: service_healthy
+      tuition-service:
+        condition: service_healthy
+    networks:
+      - ibanking-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8003/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 40s
+    restart: on-failure:5
+
+  # OTP Service (With Database)
+  otp-service:
+    build: ./otp-service
+    container_name: otp-service
+    environment:
+      DATABASE_URL: mysql+pymysql://otp_user:otp_pass@otp-db:3306/otp_db
+      INTERNAL_API_KEY: sk_live_51KxYz9H8mN2pQ3rS4tU5vW6xY7zA8bC9dE0fG1hI2jK3lM4nO5pQ6rS7tU8vW9x
+      CUSTOMER_SERVICE_URL: http://customer-service:8006
+      STUDENT_SERVICE_URL: http://tuition-service:8002
+      PAYMENT_SERVICE_URL: http://payment-service:8003
+      SERVICE_PORT: 8004
+      SMTP_HOST: smtp.gmail.com
+      SMTP_PORT: 587
+      SMTP_USER: soagk1tdtu@gmail.com
+      SMTP_PASSWORD: wveg zevy kdya rxbv
+      SMTP_FROM_EMAIL: soagk1tdtu@gmail.com
+      SMTP_FROM_NAME: iBanking TDTU
+    ports:
+      - "8004:8004"
+    depends_on:
+      otp-db:
+        condition: service_healthy
+      customer-service:
+        condition: service_healthy
+      tuition-service:
+        condition: service_healthy
+      payment-service:
+        condition: service_healthy
+    networks:
+      - ibanking-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8004/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 40s
+    restart: on-failure:5
+
+  # =========================================
+  # LAYER 3: API GATEWAY (Start Last - After All Services Ready)
+  # =========================================
+  
+  # API Gateway (Routes all requests to backend services)
+  api-gateway:
+    build: ./api-gateway
+    container_name: api-gateway
+    environment:
+      AUTH_SERVICE_URL: http://auth-service:8001
+      CUSTOMER_SERVICE_URL: http://customer-service:8006
+      TUITION_SERVICE_URL: http://tuition-service:8002
+      PAYMENT_SERVICE_URL: http://payment-service:8003
+      OTP_SERVICE_URL: http://otp-service:8004
+      INTERNAL_API_KEY: sk_live_51KxYz9H8mN2pQ3rS4tU5vW6xY7zA8bC9dE0fG1hI2jK3lM4nO5pQ6rS7tU8vW9x
+    ports:
+      - "8080:8000"
+    volumes:
+      - ./ui:/ui
+    depends_on:
+      auth-service:
+        condition: service_healthy
+      customer-service:
+        condition: service_healthy
+      tuition-service:
+        condition: service_healthy
+      payment-service:
+        condition: service_healthy
+      otp-service:
+        condition: service_healthy
+    networks:
+      - ibanking-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped

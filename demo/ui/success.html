@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Thanh toán thành công - iBanking TDTU</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body class="d-flex flex-column min-vh-100 bg-light">
+  <!-- Header -->
+  <header class="header text-white shadow-sm sticky-top">
+    <div class="container-fluid d-flex justify-content-between align-items-center py-2">
+      <div class="d-flex align-items-center">
+        <img src="/img/Logo-TDTU.png" alt="TDTU" class="logo me-2" style="width:45px;">
+        <h2 class="m-0 fs-4 fw-bold">iBanking TDTU</h2>
+      </div>
+      <nav class="navbar navbar-expand">
+        <ul class="navbar-nav ms-auto gap-2">
+          <li class="nav-item"><a class="nav-link" href="payment.html"><i class="fas fa-credit-card"></i> Thanh toán</a></li>
+          <li class="nav-item"><a class="nav-link" href="transactions.html"><i class="fas fa-history"></i> Lịch sử</a></li>
+          <li class="nav-item"><a class="nav-link" href="profile.html"><i class="fas fa-user"></i> Hồ sơ</a></li>
+          <li class="nav-item"><a class="nav-link" href="#" id="logout-btn"><i class="fas fa-sign-out-alt"></i> Đăng xuất</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container my-5 d-flex align-items-center justify-content-center flex-grow-1">
+    <div class="card shadow-lg border-0" style="max-width: 600px; width: 100%;">
+      <div class="card-body p-5 text-center">
+        <div class="mb-4">
+          <i class="fas fa-check-circle text-success" style="font-size: 5rem;"></i>
+        </div>
+        <h2 class="mb-3 text-success fw-bold">Thanh toán thành công!</h2>
+        <p class="text-muted mb-4">Giao dịch của bạn đã được xử lý thành công.</p>
+        
+        <div class="alert alert-light border mb-4">
+          <div class="row g-3">
+            <div class="col-12">
+              <div class="d-flex justify-content-between">
+                <span class="text-muted">Mã giao dịch:</span>
+                <strong id="txn-code">...</strong>
+              </div>
+            </div>
+            <div class="col-12">
+              <div class="d-flex justify-content-between">
+                <span class="text-muted">Mã sinh viên:</span>
+                <strong id="student-code">...</strong>
+              </div>
+            </div>
+            <div class="col-12">
+              <div class="d-flex justify-content-between">
+                <span class="text-muted">Số tiền:</span>
+                <strong class="text-danger" id="amount">...</strong>
+              </div>
+            </div>
+            <div class="col-12">
+              <div class="d-flex justify-content-between">
+                <span class="text-muted">Số dư mới:</span>
+                <strong class="text-success" id="new-balance">...</strong>
+              </div>
+            </div>
+            <div class="col-12">
+              <div class="d-flex justify-content-between">
+                <span class="text-muted">Thời gian:</span>
+                <strong id="created-at">...</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <p class="text-muted small mb-4">
+          <i class="fas fa-envelope me-2"></i>Hóa đơn điện tử đã được gửi đến email của bạn.
+        </p>
+
+        <p class="text-muted small mb-4" id="redirect-msg">
+          Tự động chuyển đến trang thanh toán <strong id="countdown">30</strong> giây...
+        </p>
+
+        <div class="d-grid gap-2">
+          <a href="/transactions.html" class="btn btn-primary btn-lg">
+            <i class="fas fa-history me-2"></i>Xem lịch sử giao dịch
+          </a>
+          <a href="/payment.html" class="btn btn-outline-secondary">
+            <i class="fas fa-credit-card me-2"></i>Thanh toán mới
+          </a>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="bg-white text-secondary py-3 border-top mt-auto">
+    <div class="container-fluid text-center">
+      <small>&copy; 2025 iBanking TDTU - GK_KTHDV. All rights reserved.</small>
+    </div>
+  </footer>
+
+  <script type="module" src="/js/auth-check.js"></script>
+  <script type="module" src="/js/success.js"></script>
+  <script type="module" src="/js/logout.js"></script>
+</body>
+</html>

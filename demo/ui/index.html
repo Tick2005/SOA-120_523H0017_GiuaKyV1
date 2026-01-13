@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Đăng nhập - iBanking TDTU</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body class="d-flex flex-column min-vh-100">
+  <div class="container my-auto">
+    <div class="row justify-content-center">
+      <div class="col-lg-8">
+        <div class="card border-0 shadow-lg">
+          <div class="card-body p-5 text-center">
+            <img src="/img/Logo-TDTU.png" alt="TDTU" class="mb-3" style="width:80px;">
+            <h3 class="fw-bold text-primary mb-2">iBanking TDTU</h3>
+            <p class="text-muted mb-4">Đăng nhập để thanh toán học phí</p>
+
+            <form id="login-form" class="text-start">
+              <div class="mb-3">
+                <label class="form-label fw-500">Tên đăng nhập</label>
+                <input type="text" id="username" class="form-control form-control-lg" required placeholder="Nhập username" autocomplete="username" />
+              </div>
+              <div class="mb-4">
+                <label class="form-label fw-500">Mật khẩu</label>
+                <input type="password" id="password" class="form-control form-control-lg" required placeholder="Nhập mật khẩu" autocomplete="current-password" />
+              </div>
+              <div id="login-alert" class="alert alert-danger d-none mb-3"></div>
+              <button type="submit" class="btn btn-primary w-100 btn-lg position-relative">
+                <span class="login-text">Đăng nhập</span>
+                <span class="spinner-border spinner-border-sm d-none" id="login-spinner"></span>
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- JS TÁCH RIÊNG -->
+  <script type="module" src="/js/login.js"></script>
+</body>
+</html>
