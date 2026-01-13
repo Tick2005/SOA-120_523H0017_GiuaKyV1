@@ -201,8 +201,8 @@ All services use environment variables defined in `docker-compose.yml`. You can 
 
 ```yaml
 # Key environment variables:
-JWT_SECRET_KEY: a8f5f167f44f4964e6c998dee827110c3e7b6e3c9c3f4f7e8a1b2c3d4e5f6a7b
-INTERNAL_API_KEY: sk_live_51KxYz9H8mN2pQ3rS4tU5vW6xY7zA8bC9dE0fG1hI2jK3lM4nO5pQ6rS7tU8vW9x
+JWT_SECRET_KEY: ...
+INTERNAL_API_KEY: ...
 ACCESS_TOKEN_EXPIRE_HOURS: 24
 ```
 
@@ -793,12 +793,12 @@ CUSTOMER_SERVICE_URL=http://customer-service:8006
 TUITION_SERVICE_URL=http://tuition-service:8002
 PAYMENT_SERVICE_URL=http://payment-service:8003
 OTP_SERVICE_URL=http://otp-service:8004
-INTERNAL_API_KEY=sk_live_51KxYz9H8mN2pQ3rS4tU5vW6xY7zA8bC9dE0fG1hI2jK3lM4nO5pQ6rS7tU8vW9x
+INTERNAL_API_KEY=sk_live..
 ```
 
 ### Auth Service
 ```env
-JWT_SECRET_KEY=a8f5f167f44f4964e6c998dee827110c3e7b6e3c9c3f4f7e8a1b2c3d4e5f6a7b
+JWT_SECRET_KEY=a8f5f...
 JWT_ALGORITHM=HS256
 ACCESS_TOKEN_EXPIRE_HOURS=24
 CUSTOMER_SERVICE_URL=http://customer-service:8006
